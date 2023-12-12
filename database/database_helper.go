@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/nicholaspark09/awsgorocket/github.com/nicholaspark09/awsgorocket/converter"
+	"github.com/nicholaspark09/awsgorocket/converter"
 	"log"
 )
 
