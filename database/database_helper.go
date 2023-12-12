@@ -19,22 +19,22 @@ type DatabaseHelperContract[T any] interface {
 }
 
 type DatabaseHelper[T any] struct {
-	client    *dynamodb.Client
-	tableName *string
-	converter converter.ModelConverterContract[T]
+	Client    *dynamodb.Client
+	TableName *string
+	Converter converter.ModelConverterContract[T]
 }
 
 func (helper *DatabaseHelper[T]) Create(data *T) (*T, *error) {
-	item, err := helper.converter.ConvertToItem(data)
+	item, err := helper.Converter.ConvertToItem(data)
 	if err != nil {
 		log.Printf("Error in converting object: %s", errors.Unwrap(*err).Error())
 		return nil, err
 	}
 	itemInput := &dynamodb.PutItemInput{
-		TableName: helper.tableName,
+		TableName: helper.TableName,
 		Item:      item,
 	}
-	_, clientError := helper.client.PutItem(context.TODO(), itemInput)
+	_, clientError := helper.Client.PutItem(context.TODO(), itemInput)
 	if clientError != nil {
 		log.Printf("Error in creating an item: %s", clientError.Error())
 		return nil, &clientError
@@ -47,8 +47,8 @@ func (helper *DatabaseHelper[T]) Fetch(partitionKey string, rangeKey string) (*T
 		"partition_key": &types.AttributeValueMemberS{Value: partitionKey},
 		"range_key":     &types.AttributeValueMemberS{Value: rangeKey},
 	}
-	itemOutput, err := helper.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: helper.tableName,
+	itemOutput, err := helper.Client.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: helper.TableName,
 		Key:       selectedKeys,
 	})
 	if err != nil {
@@ -59,12 +59,12 @@ func (helper *DatabaseHelper[T]) Fetch(partitionKey string, rangeKey string) (*T
 		log.Printf("No item found: %s", rangeKey)
 		return nil, nil
 	}
-	return helper.converter.ConvertToModel(itemOutput.Item)
+	return helper.Converter.ConvertToModel(itemOutput.Item)
 }
 
 func (helper *DatabaseHelper[T]) FetchAll(partitionKey string, limit int32, lastRangeKey *string) ([]*T, *string) {
 	input := &dynamodb.QueryInput{
-		TableName:              helper.tableName,
+		TableName:              helper.TableName,
 		KeyConditionExpression: aws.String("partition_key = :partitionKey"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":partitionKey": &types.AttributeValueMemberS{Value: partitionKey},
@@ -77,14 +77,14 @@ func (helper *DatabaseHelper[T]) FetchAll(partitionKey string, limit int32, last
 			"range_key":     &types.AttributeValueMemberS{Value: *lastRangeKey},
 		}
 	}
-	result, err := helper.client.Query(context.TODO(), input)
+	result, err := helper.Client.Query(context.TODO(), input)
 	if err != nil {
 		log.Printf("Error in Fetching an item: %s", err.Error())
 		return nil, nil
 	}
 	var items []*T
 	for _, item := range result.Items {
-		pipeline, err := helper.converter.ConvertToModel(item)
+		pipeline, err := helper.Converter.ConvertToModel(item)
 		if err != nil {
 			log.Printf("Error in parsing item: %s", errors.Unwrap(*err).Error())
 		}
@@ -98,13 +98,13 @@ func (helper *DatabaseHelper[T]) FetchAll(partitionKey string, limit int32, last
 }
 
 func (helper *DatabaseHelper[T]) Update(data T) bool {
-	item, converterError := helper.converter.ConvertToItem(&data)
+	item, converterError := helper.Converter.ConvertToItem(&data)
 	if converterError != nil {
 		log.Printf("Error in converting the model")
 		return false
 	}
-	_, err := helper.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName: helper.tableName,
+	_, err := helper.Client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName: helper.TableName,
 		Item:      item,
 	})
 	if err != nil {
@@ -119,8 +119,8 @@ func (helper *DatabaseHelper[T]) Delete(partitionKey string, rangeKey string) bo
 		"partition_key": &types.AttributeValueMemberS{Value: partitionKey},
 		"range_key":     &types.AttributeValueMemberS{Value: rangeKey},
 	}
-	_, err := helper.client.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
-		TableName: helper.tableName,
+	_, err := helper.Client.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+		TableName: helper.TableName,
 		Key:       selectedKeys,
 	})
 	if err != nil {
