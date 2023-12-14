@@ -12,19 +12,21 @@ import (
 )
 
 type MetricsManager struct {
-	client *cloudwatch.Client
+	client      *cloudwatch.Client
+	serviceName string
 }
 
 const nameSpace = "PipelineFacadeService"
 
-func ProvideMetricsManager(provider config.ConfigProvider) MetricsManagerContract {
+func ProvideMetricsManager(provider config.ConfigProvider, serviceName string) MetricsManagerContract {
 	cloudWatchClient := cloudwatch.NewFromConfig(provider.SdkConfig)
 	return &MetricsManager{
-		client: cloudWatchClient,
+		client:      cloudWatchClient,
+		serviceName: serviceName,
 	}
 }
 
-func (metricsManager *MetricsManager) SendMeasuredTime(serviceName string, callName string, timeDuration time.Duration) {
+func (metricsManager *MetricsManager) SendMeasuredTime(callName string, timeDuration time.Duration) {
 	title := "ExecutionTime:" + callName
 	elapsed := timeDuration.Milliseconds()
 	metricDatum := &types.MetricDatum{
@@ -38,7 +40,7 @@ func (metricsManager *MetricsManager) SendMeasuredTime(serviceName string, callN
 	}
 	_, err := metricsManager.client.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
 		MetricData: []types.MetricDatum{*metricDatum},
-		Namespace:  aws.String(serviceName),
+		Namespace:  aws.String(metricsManager.serviceName),
 	})
 	log.Printf("%s, Time: %v", title, elapsed)
 	if err != nil {
