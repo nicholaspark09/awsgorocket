@@ -24,7 +24,7 @@ func ProvideMetricsManager(provider config.ConfigProvider) MetricsManagerContrac
 	}
 }
 
-func (metricsManager *MetricsManager) SendMeasuredTime(callName string, timeDuration time.Duration) {
+func (metricsManager *MetricsManager) SendMeasuredTime(serviceName string, callName string, timeDuration time.Duration) {
 	title := "ExecutionTime:" + callName
 	elapsed := timeDuration.Milliseconds()
 	metricDatum := &types.MetricDatum{
@@ -38,7 +38,7 @@ func (metricsManager *MetricsManager) SendMeasuredTime(callName string, timeDura
 	}
 	_, err := metricsManager.client.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
 		MetricData: []types.MetricDatum{*metricDatum},
-		Namespace:  aws.String(nameSpace),
+		Namespace:  aws.String(serviceName),
 	})
 	log.Printf("%s, Time: %v", title, elapsed)
 	if err != nil {
