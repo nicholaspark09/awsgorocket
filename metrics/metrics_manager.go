@@ -50,6 +50,44 @@ func (metricsManager *MetricsManager) SendMeasuredTime(callName string, timeDura
 	}
 }
 
+func (metricsManager *MetricsManager) Send500Error(callName string, statusCode int, message string) {
+	metricDatum := &types.MetricDatum{
+		MetricName: aws.String("5XXError:" + callName),
+		Timestamp:  aws.Time(time.Now().UTC()),
+		Dimensions: []types.Dimension{
+			{Name: aws.String("ApiError"),
+				Value: aws.String(message)},
+		},
+		Value: aws.Float64(float64(statusCode)),
+	}
+	_, err := metricsManager.client.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
+		MetricData: []types.MetricDatum{*metricDatum},
+		Namespace:  aws.String(metricsManager.serviceName),
+	})
+	if err != nil {
+		log.Printf("Error in sending metrics: %s", err.Error())
+	}
+}
+
+func (metricsManager *MetricsManager) Send400Error(callName string, statusCode int, message string) {
+	metricDatum := &types.MetricDatum{
+		MetricName: aws.String("4XXError:" + callName),
+		Timestamp:  aws.Time(time.Now().UTC()),
+		Dimensions: []types.Dimension{
+			{Name: aws.String("ApiError"),
+				Value: aws.String(message)},
+		},
+		Value: aws.Float64(float64(statusCode)),
+	}
+	_, err := metricsManager.client.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
+		MetricData: []types.MetricDatum{*metricDatum},
+		Namespace:  aws.String(metricsManager.serviceName),
+	})
+	if err != nil {
+		log.Printf("Error in sending metrics: %s", err.Error())
+	}
+}
+
 func (metricsManager *MetricsManager) SendLog(tag string, message string) {
 	// TODO
 }
