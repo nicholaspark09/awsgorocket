@@ -71,7 +71,8 @@ func (helper *DatabaseHelper[T]) FetchAll(partitionKey string, limit int32, last
 		},
 		Limit: aws.Int32(limit),
 	}
-	if lastRangeKey != nil {
+	if lastRangeKey != nil && len(*lastRangeKey) > 0 {
+		log.Printf("Trying to use a last range key of: %s", *lastRangeKey)
 		input.ExclusiveStartKey = map[string]types.AttributeValue{
 			"partition_key": &types.AttributeValueMemberS{Value: partitionKey},
 			"range_key":     &types.AttributeValueMemberS{Value: *lastRangeKey},
