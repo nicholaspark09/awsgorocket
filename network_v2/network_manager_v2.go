@@ -19,6 +19,16 @@ type NetworkManagerV2[T any] struct {
 	client      http.Client
 }
 
+func ProvideNetworkManagerV2[T any](endpoint string, params map[string]string, apiKey *string, contentType *string) NetworkManagerV2[T] {
+	return NetworkManagerV2[T]{
+		endpoint:    endpoint,
+		params:      params,
+		apiKey:      apiKey,
+		contentType: contentType,
+		client:      http.Client{},
+	}
+}
+
 func (manager *NetworkManagerV2[T]) GetEndpoint() (string, *error) {
 	parsedUrl, err := url.Parse(manager.endpoint)
 	if err != nil {
